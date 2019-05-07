@@ -61,9 +61,9 @@ def main():
                 # Get feed dict
                 input_batch = training_set.train_batch(actor.batch_size, actor.max_length, actor.input_dimension)
                 feed = {actor.input_: input_batch}
-                if i % 10 == 0:
+                if i % 5 == 0:
 
-                    actor.assign_policy_parameters()
+                    sess.run(actor.assign_op,feed_dict = feed)
                     
 
                 # Forward pass & train step

@@ -68,7 +68,6 @@ class Actor(object):
                 #self.assign_ops.append(tf.assign(v_old, v))     
 
         with tf.variable_scope('assign_op'):
-
               self.assign_op = tf.assign(self.old_softmax,self.log_softmax)
 
     def assign_policy_parameters(self):
@@ -76,7 +75,7 @@ class Actor(object):
         print(self.log_softmax)
         print("==========================")
         tf.get_default_session().run(self.assign_op) 
-    
+
 
 
     def build_permutation(self):# build encoder & decoder
@@ -90,6 +89,7 @@ class Actor(object):
             # Ptr-net returns permutations (self.positions), with their log-probability for backprop
             self.ptr = Pointer_decoder(self.encoder_output, self.config)
             self.positions, self.log_softmax = self.ptr.loop_decode()
+
             variable_summaries('log_softmax',self.log_softmax, with_max_min = True)
 
         
@@ -162,9 +162,10 @@ class Actor(object):
                 self.reward_baseline = tf.stop_gradient(self.reward - self.avg_baseline - self.critic.predictions) # [Batch size, 1] 
                 variable_summaries('reward_baseline',self.reward_baseline, with_max_min = True)
                 # Loss
-                ratio = tf.exp(self.log_softmax/self.old_softmax)
 
-                clipped_ratios = tf.clip_by_value(ratio,0.8,1.2)
+                ratio = tf.exp(self.log_softmax-self.old_softmax)
+
+                clipped_ratios = tf.clip_by_value(ratio,0.9,1.1)
 
                 self.loss1 = tf.minimum(tf.multiply(
                     self.reward_baseline,ratio),tf.multiply(self.reward_baseline,clipped_ratios))
@@ -174,8 +175,7 @@ class Actor(object):
                 #求reword
                 #self.log_softmax   Tensor("decoder/AddN:0", shape=(128,), dtype=float32)
                 #reward_baseline    Tensor("reinforce/StopGradient:0", shape=(128,), dtype=float32)
-                #loss1 求均值
-
+                #loss1 求均值     
                 #self.loss1 = tf.reduce_mean(self.reward_baseline*self.log_softmax,0)
                 tf.summary.scalar('loss1', self.loss1)
                 # Minimize step
